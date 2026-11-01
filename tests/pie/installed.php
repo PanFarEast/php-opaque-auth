@@ -1,7 +1,14 @@
 <?php
 declare(strict_types=1);
 
-require $argv[1];
+// Exercise native-only installation first; an optional autoloader checks the
+// migration path in a separate process without supplying the public classes.
+if (isset($argv[1])) require $argv[1];
+foreach (['Opaque\\Client', 'Opaque\\Server'] as $class) {
+    if (!class_exists($class, false) || !(new ReflectionClass($class))->isInternal()) {
+        throw new RuntimeException('PIE must expose native classes without a facade');
+    }
+}
 require_once __DIR__ . '/../abi.php';
 verifyTargetRuntime();
 verifyModuleAbi(ini_get('extension_dir') . '/opaque_auth.so');
@@ -37,4 +44,4 @@ $finish = Opaque\Client::finishLogin($login + $challenge + [
 verifyInstalled(is_array($finish), 'Installed client must authenticate');
 $verified = Opaque\Server::finishLogin($challenge + $finish);
 verifyInstalled($verified['sessionKey'] === $finish['sessionKey'], 'Installed peers must derive matching keys');
-echo "PIE-installed module and Composer facade: registration/login passed\n";
+echo "PIE-installed native API: registration/login passed\n";

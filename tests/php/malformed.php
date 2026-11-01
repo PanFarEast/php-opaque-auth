@@ -1,8 +1,6 @@
 <?php
 declare(strict_types=1);
 
-require_once __DIR__ . '/../../php/Opaque.php';
-
 function malformedCheck(bool $condition, string $message): void
 {
     if (!$condition) {

@@ -1,5 +1,4 @@
 <?php
-require_once __DIR__ . '/../../php/Opaque.php';
 // A line-oriented adapter for exercising the public facade in a long-lived PHP process.
 while (($line = fgets(STDIN)) !== false) {
     try {

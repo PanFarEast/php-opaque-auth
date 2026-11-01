@@ -18,6 +18,9 @@ use opaque_ke::{
 use rand::rngs::OsRng;
 use sha2::Sha512;
 
+mod api;
+mod registration;
+
 struct Serenity;
 impl CipherSuite for Serenity {
     type OprfCs = opaque_ke::Ristretto255;
@@ -328,6 +331,7 @@ pub fn opaque_finish_server_login(
 pub fn get_module(module: ModuleBuilder) -> ModuleBuilder {
     module
         .name("opaque_auth")
+        .startup_function(registration::startup)
         .function(wrap_function!(opaque_create_setup))
         .function(wrap_function!(opaque_get_public_key))
         .function(wrap_function!(opaque_start_client_registration))

@@ -24,6 +24,7 @@ pie install 'panfareast/opaque-auth:*@dev' --no-interaction \
     --with-php-config="$(command -v php-config)" \
     --with-phpize-path="$(command -v phpize)"
 php --ri opaque_auth
+php -d zend.exception_ignore_args=1 "$root/tests/pie/installed.php"
 
 cd "$work/app"
 php -r '
@@ -48,6 +49,7 @@ pie install 'panfareast/opaque-auth:*@dev' --no-interaction \
     --with-phpize-path="$(command -v phpize)"
 php "$root/tests/pie/enabled.php" 1
 php -d zend.exception_ignore_args=1 "$root/tests/pie/installed.php" "$work/app/vendor/autoload.php"
+php -d zend.exception_ignore_args=1 "$root/tests/pie/installed.php"
 pie uninstall panfareast/opaque-auth --no-interaction \
     --with-php-config="$(command -v php-config)"
 php "$root/tests/pie/enabled.php" 0

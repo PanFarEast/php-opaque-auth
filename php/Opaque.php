@@ -3,6 +3,10 @@ declare(strict_types=1);
 
 namespace Opaque;
 
+// Compatibility with extensions predating the native public classes. Keep
+// declarations conditional so explicit includes and Composer classmaps are safe
+// when the extension already provides the API.
+if (!class_exists(Client::class, false)) {
 /** @internal Shared validation and secret-safe native-call boundary. */
 trait ProtocolArguments
 {
@@ -89,6 +93,9 @@ final class Client
     }
 }
 
+}
+
+if (!class_exists(Server::class, false)) {
 final class Server
 {
     use ProtocolArguments;
@@ -132,4 +139,5 @@ final class Server
             self::options($params),
         ])];
     }
+}
 }
