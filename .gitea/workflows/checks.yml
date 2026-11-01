@@ -13,9 +13,9 @@ jobs:
     steps:
       - uses: https://github.com/actions/checkout@v4
       - name: Build PHP and Rust test environment
-        run: docker build --build-arg PHP_VERSION=${{ matrix.php }} -t opaque-check -f tests/Dockerfile .
+        run: docker build --build-arg PHP_VERSION=${{ matrix.php }} -t opaque-check:${{ matrix.php }} -f tests/Dockerfile .
       - name: Check extension, interoperability, and local PIE installation
         shell: bash
         run: |
           set -o pipefail
-          git archive HEAD | docker run --rm -i opaque-check sh -c 'tar -x -C /work && sh tests/check.sh'
+          git archive HEAD | docker run --rm -i opaque-check:${{ matrix.php }} sh -c 'tar -x -C /work && sh tests/check.sh'
