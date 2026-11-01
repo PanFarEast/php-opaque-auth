@@ -17,5 +17,6 @@ cargo clippy --all-targets -- -D warnings
 
 ## Repository guidance
 
+- Format commit messages as `tag: message`.
 - For Gitea issue work, use the configured MCP tools; see `docs/agents/issue-tracker.md`.
 - For glossary and architecture-decision conventions, see `docs/agents/domain.md`.
