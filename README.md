@@ -1,6 +1,6 @@
 # php-opaque-auth
 
-PHP extension `opaque-auth`. The repository is planned to move to `https://github.com/panfareast/php-opaque-auth`; the package names below use the destination vendor. Until the transfer and publication are complete, install from a local checkout.
+PHP extension `opaque-auth`, distributed from [GitHub](https://github.com/panfareast/php-opaque-auth). It is not published on Packagist; configure the GitHub VCS repository in PIE to install a tagged release.
 
 Native PHP OPAQUE protocol extension built on [`opaque-ke`](https://crates.io/crates/opaque-ke) and [`ext-php-rs`](https://ext-php.rs/), targeting PHP 8.3–8.5.
 
@@ -12,7 +12,7 @@ The extension exposes protocol operations only. PHP application code owns identi
 
 The default target is the same Ristretto255 suite used by `@serenity-kit/opaque`. `@serenity-kit/opaque-p256` requires a distinct P-256 ciphersuite and is not implemented by the initial Ristretto-only build.
 
-## Install from a local checkout
+## Install a tagged release with PIE
 
 See the [installation guide](docs/installation.md) for PIE setup and a multi-stage
 Docker build that keeps Rust and build dependencies out of the final image.
@@ -25,18 +25,20 @@ The extension can be built and installed with [PIE](https://github.com/php/pie).
 | PHP module / installed file | `opaque_auth` / `opaque_auth.so` |
 | Cargo build artifact | `libopaque_auth.so` |
 
-From the extension checkout, add it as a local PIE repository and install it for the PHP ABI you intend to use:
+Add the public GitHub repository to PIE and install the exact release for your PHP ABI. No local source checkout, Packagist submission, or GitHub token is required:
 
 ```sh
-pie repository:add path /absolute/path/to/php-opaque-auth \
+pie repository:add vcs https://github.com/panfareast/php-opaque-auth \
   --with-php-config=/path/to/php-config
-pie install 'panfareast/opaque-auth:*@dev' \
+pie install 'panfareast/opaque-auth:0.1.0' \
   --with-php-config=/path/to/php-config \
   --with-phpize-path=/path/to/phpize
 php --ri opaque_auth
 ```
 
 The `php --ri` check should show the `opaque_auth` module. Use the `php` binary corresponding to the supplied PHP development tools. If a prerequisite is missing or the ABI does not match, resolve that environment issue before retrying; this workflow does not provide a manual-build fallback.
+
+PIE discovers the Composer package version `0.1.0` from the Git tag `v0.1.0`; it downloads that release's source and compiles it. These are not prebuilt binaries. For development-checkout installation, see the [installation guide](docs/installation.md#optional-local-development-checkout).
 
 PIE installs the native package `panfareast/opaque-auth`. Enabling the extension directly provides `Opaque\Client` and `Opaque\Server` as native PHP classes: no Composer package, autoloader, or PHP include is required. Composer-managed applications may declare `ext-opaque_auth` (a single `ext-` prefix) as a platform requirement.
 
@@ -139,3 +141,5 @@ docker run --rm -v "$PWD:/work" opaque-check:8.3-zts sh tests/check.sh
 ```
 
 The [GitHub Actions workflow](.github/workflows/checks.yml) runs the same checks for PHP 8.3, 8.4, and 8.5 in both NTS (`PHP_VARIANT=cli`) and ZTS (`PHP_VARIANT=zts`) modes on a Docker-capable runner. Tests verify the requested runtime version/thread mode and the debug and installed release artifacts' module build IDs. Default Cargo target directories are isolated by PHP version and variant. Cross-runtime tests exchange registration and login messages in both client/server directions, checking shared keys and encoding. Tests cover the memory-constrained/default and a custom KSF; the approximately 2 GiB RFC profile is not exercised. No compatibility is claimed for `@serenity-kit/opaque-p256` or for untested package versions/configurations.
+
+On stable `vX.Y.Z` tag pushes, the release-install matrix additionally installs the exact public version in containers containing only the test harness, checks package source/distribution commit references and native ABI, and completes registration/login without Composer or a facade. See [release preparation](docs/installation.md#release-preparation) for the publishing steps.

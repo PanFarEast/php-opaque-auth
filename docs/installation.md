@@ -4,10 +4,10 @@ The native extension is `panfareast/opaque-auth`; its PHP module is `opaque_auth
 Enabling it provides native `Opaque\Client` and `Opaque\Server` classes directly;
 Composer and manually loading PHP files are not required.
 
-The repository is planned to move to
-`https://github.com/panfareast/php-opaque-auth`. Until that transfer and package
-publication are complete, use a local checkout as shown below. These instructions
-do not assume the packages are already available on Packagist.
+Releases are distributed from the public repository
+`https://github.com/panfareast/php-opaque-auth`, using an explicitly configured
+PIE VCS repository. There is no Packagist publication or separate facade package
+to install. You do not need a local source checkout or a GitHub token.
 
 ## Install with PIE
 
@@ -27,14 +27,15 @@ Linux x86_64 non-debug NTS and ZTS builds have been verified on PHP 8.3.36,
 8.4.27, and 8.5.12. Other architectures and debug builds are unverified;
 Windows and macOS packaging is unsupported.
 
-### Build and enable the native extension
+### Install and enable a tagged release
 
-With a local checkout at `/absolute/path/to/php-opaque-auth`, run:
+Register the package source and select an exact release:
 
 ```sh
-pie repository:add path /absolute/path/to/php-opaque-auth \
+pie repository:add vcs https://github.com/panfareast/php-opaque-auth \
   --with-php-config=/path/to/php-config
-pie install 'panfareast/opaque-auth:*@dev' \
+pie info 'panfareast/opaque-auth:0.1.0' --with-php-config=/path/to/php-config
+pie install 'panfareast/opaque-auth:0.1.0' \
   --with-php-config=/path/to/php-config \
   --with-phpize-path=/path/to/phpize
 /path/to/php --ri opaque_auth
@@ -49,6 +50,33 @@ your application, not only in the CLI.
 
 PIE currently builds this package from source; it does not download a prebuilt
 extension. Missing prerequisites must be installed before retrying.
+
+The Git tag `v0.1.0` supplies Composer/PIE version `0.1.0`; use that exact package
+constraint for reproducible selection. GitHub supplies the tagged source
+archive and Git commit references. For later compatible `0.1.x` releases you
+can opt into the constraint `^0.1`, but an exact version avoids changing releases
+between builds. Do not move published tags; publish a new version instead.
+
+If PIE cannot find the package, check that the VCS repository was registered for
+the same target `php-config`. PIE's default Packagist repository does not contain
+this package. Anonymous GitHub API access is rate-limited; if a limit is reached,
+retry after it resets. This route does not require distributing credentials.
+
+### Optional local development checkout
+
+For local development only, replace the VCS source with a path repository in
+your development PIE configuration and select the development version:
+
+```sh
+pie repository:add path /absolute/path/to/php-opaque-auth \
+  --with-php-config=/path/to/php-config
+pie install 'panfareast/opaque-auth:*@dev' \
+  --with-php-config=/path/to/php-config \
+  --with-phpize-path=/path/to/phpize
+```
+
+Keep development path repositories separate from release-install verification;
+an earlier canonical path repository can override the VCS source.
 
 ### Use the native API
 
@@ -85,7 +113,8 @@ Use a multi-stage build. Both the builder and final image below inherit the
 system libraries match. Only the installed shared library crosses from builder
 to runtime; Rust, Cargo, Clang, PIE, source code, and build caches stay behind.
 
-Save this as `Dockerfile` at the root of your local checkout:
+Save this as `Dockerfile` in an empty build directory; no source checkout is
+needed:
 
 ```dockerfile
 ARG PHP_IMAGE=php:8.3-cli-bookworm
@@ -112,13 +141,11 @@ RUN curl --retry 3 --retry-all-errors -fsSL \
     && echo '2ca0dff6868f1b53c095625674deef38ac698588e0a25e4321cd834a5b7553bc  /usr/local/bin/pie' | sha256sum -c - \
     && chmod +x /usr/local/bin/pie
 
-WORKDIR /usr/src/php-opaque-auth
-COPY Cargo.toml Cargo.lock composer.json ./
-COPY src/ ./src/
-COPY pie/build.sh pie/config.m4 ./pie/
-RUN pie repository:add path /usr/src/php-opaque-auth --no-interaction \
+ARG OPAQUE_VERSION=0.1.0
+WORKDIR /build
+RUN pie repository:add vcs https://github.com/panfareast/php-opaque-auth --no-interaction \
         --with-php-config=/usr/local/bin/php-config \
-    && pie install 'panfareast/opaque-auth:*@dev' --no-interaction \
+    && pie install "panfareast/opaque-auth:${OPAQUE_VERSION}" --no-interaction \
         --with-php-config=/usr/local/bin/php-config \
         --with-phpize-path=/usr/local/bin/phpize \
     && php --ri opaque_auth \
@@ -136,18 +163,18 @@ RUN cp /tmp/opaque_auth.so "$(php-config --extension-dir)/opaque_auth.so" \
 RUN php -r 'exit((new ReflectionClass("Opaque\\Client"))->isInternal() && (new ReflectionClass("Opaque\\Server"))->isInternal() ? 0 : 1);'
 ```
 
-Build and verify from the checkout root:
+Build and verify from the directory containing the Dockerfile:
 
 ```sh
-docker build -t php-opaque-auth:local .
-docker run --rm php-opaque-auth:local php --ri opaque_auth
-docker run --rm -i php-opaque-auth:local php < tests/php/native.php
-docker run --rm php-opaque-auth:local sh -c '! command -v rustc && ! command -v cargo && ! command -v clang && ! command -v pie'
+docker build --build-arg OPAQUE_VERSION=0.1.0 -t php-opaque-auth:0.1.0 .
+docker run --rm php-opaque-auth:0.1.0 php --ri opaque_auth
+docker run --rm php-opaque-auth:0.1.0 php -r 'exit((new ReflectionClass("Opaque\\Client"))->isInternal() && (new ReflectionClass("Opaque\\Server"))->isInternal() ? 0 : 1);'
+docker run --rm php-opaque-auth:0.1.0 sh -c '! command -v rustc && ! command -v cargo && ! command -v clang && ! command -v pie'
 ```
 
 The example uses Debian Bookworm official PHP images, whose development tools
 are available in the builder. The final image is the original PHP base plus
-the extension and enablement INI; the stdin smoke test completes registration and
+the extension and enablement INI. Release-install tests complete registration and
 login with matching keys using only native classes. This is not a claim that the
 upstream PHP base itself contains no development utilities.
 
@@ -194,3 +221,28 @@ substitute for installing it.
 Installing the extension does not configure application authentication sessions,
 storage, or transport. Applications own those concerns and the lifecycle of
 serialized protocol state. Never log passwords, setup, records, keys, or state.
+
+## Release preparation
+
+Maintainers publish Git tags, not Packagist packages. For each stable release:
+
+1. Align the Cargo package/module version with the intended `vX.Y.Z` tag and
+   validate the root PIE metadata (`composer validate --strict`). Composer
+   derives the package version from the tag; do not add a hard-coded `version`
+   field to the package manifest.
+2. Run the full PHP 8.3–8.5 NTS/ZTS suite and review the release commit. Push that
+   commit, then publish an annotated `vX.Y.Z` tag pointing to it. Repository
+   ownership and release approval remain with the maintainer; use their normal
+   authenticated Git setup. No registry credential or automated publishing token
+   is stored in this repository.
+3. Check the tag's GitHub Actions run. Its `release-install` jobs build matching
+   PHP environments, copy only tests into clean installation containers, and
+   install `panfareast/opaque-auth:X.Y.Z` anonymously through the documented VCS
+   route. They check package/module versions, source and distribution references
+   against the tag commit, ABI, native registration/login, and removal.
+4. Treat published tags as immutable. If release verification fails, investigate
+   and publish any necessary fix as a new version rather than moving the tag.
+
+This route needs no Packagist dashboard or ownership claim. If a maintainer uses
+third-party signing, ownership, or credentials in the future, those steps and
+secrets remain human-controlled and outside tracked configuration.

@@ -23,3 +23,28 @@ jobs:
         run: |
           set -o pipefail
           git archive HEAD | docker run --rm -i -e OPAQUE_TEST_PHP_VERSION=${{ matrix.php }} -e OPAQUE_TEST_PHP_VARIANT=${{ matrix.variant }} opaque-check:${{ matrix.php }}-${{ matrix.variant }} sh -c 'tar -x -C /work && sh tests/check.sh'
+
+  release-install:
+    # The release harness verifies stable vX.Y.Z tags, not prereleases/build metadata.
+    if: startsWith(github.ref, 'refs/tags/v') && !contains(github.ref_name, '-') && !contains(github.ref_name, '+')
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.3', '8.4', '8.5']
+        variant: ['cli', 'zts']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build release installation test environment
+        run: docker build --build-arg PHP_VERSION=${{ matrix.php }} --build-arg PHP_VARIANT=${{ matrix.variant }} -t opaque-release:${{ matrix.php }}-${{ matrix.variant }} -f tests/Dockerfile .
+      - name: Install the public tagged version without a source checkout
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          set -o pipefail
+          export OPAQUE_RELEASE_VERSION="${RELEASE_TAG#v}"
+          OPAQUE_RELEASE_COMMIT=$(git rev-parse HEAD)
+          export OPAQUE_RELEASE_COMMIT
+          tar -cf - tests/abi.php tests/runtime.php tests/pie/enabled.php tests/pie/installed.php tests/release |
+            docker run --rm -i -e OPAQUE_RELEASE_VERSION -e OPAQUE_RELEASE_COMMIT -e OPAQUE_TEST_PHP_VERSION=${{ matrix.php }} -e OPAQUE_TEST_PHP_VARIANT=${{ matrix.variant }} opaque-release:${{ matrix.php }}-${{ matrix.variant }} sh -c 'mkdir -p /harness && tar -xf - -C /harness && sh /harness/tests/release/check.sh'

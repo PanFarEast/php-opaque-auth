@@ -22,7 +22,7 @@ function verifyInstalled(bool $condition, string $message): void
 
 verifyInstalled(extension_loaded('opaque_auth'), 'PIE-installed module must be enabled');
 $module = new ReflectionExtension('opaque_auth');
-verifyInstalled($module->getVersion() === '0.1.0', 'Installed module version must match the package');
+verifyInstalled($module->getVersion() === (getenv('OPAQUE_RELEASE_VERSION') ?: '0.1.0'), 'Installed module version must match the package');
 $ksf = ['argon2id-custom' => ['memory' => 32, 'iterations' => 1, 'parallelism' => 1]];
 $setup = Opaque\Server::createSetup();
 $registration = Opaque\Client::startRegistration(['password' => 'installation test']);
