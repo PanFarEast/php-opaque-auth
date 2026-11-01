@@ -52,6 +52,7 @@ $clientRegistrationParams = [
 ];
 $invalidKsf = [
     'unsupported preset' => 'argon2id',
+    'multiple variants' => $cheapKsf + ['unsupported' => true],
     'missing field' => ['argon2id-custom' => ['memory' => 32, 'iterations' => 1]],
     'zero field' => ['argon2id-custom' => ['memory' => 0, 'iterations' => 1, 'parallelism' => 1]],
     'out of range field' => ['argon2id-custom' => ['memory' => 4294967296, 'iterations' => 1, 'parallelism' => 1]],

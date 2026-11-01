@@ -3,8 +3,8 @@ declare(strict_types=1);
 
 namespace Opaque;
 
-/** Convenience facade matching @serenity-kit/opaque's static API. */
-final class Client
+/** @internal Shared validation and secret-safe native-call boundary. */
+trait ProtocolArguments
 {
     private static function native(string $function, #[\SensitiveParameter] array $arguments): mixed
     {
@@ -17,6 +17,30 @@ final class Client
         }
     }
 
+    private static function required(#[\SensitiveParameter] array $params, string $key): string
+    {
+        if (!isset($params[$key]) || !is_string($params[$key])) {
+            throw new \InvalidArgumentException("Missing or invalid parameter: {$key}");
+        }
+        return $params[$key];
+    }
+
+    private static function encodeOptions(#[\SensitiveParameter] array $options): string
+    {
+        try {
+            return json_encode($options, JSON_THROW_ON_ERROR);
+        } catch (\Throwable) {
+            // JSON's own stack frame contains its unredacted input argument.
+            throw new \InvalidArgumentException('Invalid options');
+        }
+    }
+}
+
+/** Convenience facade matching @serenity-kit/opaque's static API. */
+final class Client
+{
+    use ProtocolArguments;
+
     private static function options(#[\SensitiveParameter] array $params): string
     {
         $options = [];
@@ -25,14 +49,7 @@ final class Client
             $options['identifiers'] = (object) $params['identifiers'];
         }
         if (array_key_exists('keyStretching', $params)) $options['keyStretching'] = $params['keyStretching'];
-        return json_encode($options, JSON_THROW_ON_ERROR);
-    }
-    private static function required(#[\SensitiveParameter] array $params, string $key): string
-    {
-        if (!isset($params[$key]) || !is_string($params[$key])) {
-            throw new \InvalidArgumentException("Missing or invalid parameter: {$key}");
-        }
-        return $params[$key];
+        return self::encodeOptions($options);
     }
 
     public static function startRegistration(#[\SensitiveParameter] array $params): array
@@ -74,27 +91,13 @@ final class Client
 
 final class Server
 {
-    private static function native(string $function, #[\SensitiveParameter] array $arguments): mixed
-    {
-        try {
-            return $function(...$arguments);
-        } catch (\Throwable $error) {
-            throw new \RuntimeException($error->getMessage());
-        }
-    }
+    use ProtocolArguments;
 
     private static function options(#[\SensitiveParameter] array $params): string
     {
         $identifiers = array_key_exists('identifiers', $params) ? $params['identifiers'] : [];
         if (!is_array($identifiers)) throw new \InvalidArgumentException('Invalid identifiers');
-        return json_encode(['identifiers' => (object) $identifiers], JSON_THROW_ON_ERROR);
-    }
-    private static function required(#[\SensitiveParameter] array $params, string $key): string
-    {
-        if (!isset($params[$key]) || !is_string($params[$key])) {
-            throw new \InvalidArgumentException("Missing or invalid parameter: {$key}");
-        }
-        return $params[$key];
+        return self::encodeOptions(['identifiers' => (object) $identifiers]);
     }
 
     public static function createSetup(): string { return \opaque_create_setup(); }

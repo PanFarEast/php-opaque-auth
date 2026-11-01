@@ -47,6 +47,10 @@ impl SerenityKsf {
                     iterations = 1;
                 }
                 serde_json::Value::Object(object) => {
+                    // Serenity Kit deserializes this as a single-variant enum.
+                    if object.len() != 1 {
+                        return Err("Invalid keyStretching option".to_owned());
+                    }
                     let custom = object
                         .get("argon2id-custom")
                         .and_then(serde_json::Value::as_object)

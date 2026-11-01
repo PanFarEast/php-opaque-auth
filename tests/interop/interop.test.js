@@ -293,6 +293,32 @@ test('JS client and PHP server reject mismatched identifiers', { timeout: 60_000
   assert.ok(result === undefined, 'mismatched identifiers must not authenticate');
 });
 
+test('PHP and JS reject a key-stretching object with multiple variants', { timeout: 60_000 }, async () => {
+  const setup = jsServer.createSetup();
+  const keyStretching = {
+    'argon2id-custom': { memory: 32, iterations: 1, parallelism: 1 },
+    unsupported: true,
+  };
+  const jsStart = jsClient.startRegistration({ password: 'configuration-test-password' });
+  const jsResponse = jsServer.createRegistrationResponse({
+    serverSetup: setup,
+    userIdentifier: 'interop-user',
+    registrationRequest: jsStart.registrationRequest,
+  });
+  assert.throws(() => jsClient.finishRegistration({
+    ...jsStart, ...jsResponse, password: 'configuration-test-password', keyStretching,
+  }), 'JS must reject multiple KSF variants');
+  const phpStart = await call('client', 'startRegistration', { password: 'configuration-test-password' });
+  const phpResponse = jsServer.createRegistrationResponse({
+    serverSetup: setup,
+    userIdentifier: 'interop-user',
+    registrationRequest: phpStart.registrationRequest,
+  });
+  await assert.rejects(call('client', 'finishRegistration', {
+    ...phpStart, ...phpResponse, password: 'configuration-test-password', keyStretching,
+  }), 'PHP must reject multiple KSF variants');
+});
+
 test.after(async () => {
   if (!workerExited) {
     worker.stdin.end();
