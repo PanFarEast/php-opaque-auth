@@ -1,5 +1,6 @@
 {
-  "name": "engshun/opaque-auth",
+  "name": "panfareast/opaque-auth",
+  "homepage": "https://github.com/panfareast/php-opaque-auth",
   "description": "OPAQUE password authentication for PHP, built with Rust",
   "type": "php-ext",
   "license": ["MIT", "Apache-2.0"],

@@ -5,6 +5,7 @@ edition = "2024"
 rust-version = "1.88"
 license = "MIT OR Apache-2.0"
 description = "PHP extension for OPAQUE password-authenticated key exchange"
+repository = "https://github.com/panfareast/php-opaque-auth"
 
 [lib]
 crate-type = ["cdylib"]

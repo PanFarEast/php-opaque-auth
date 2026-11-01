@@ -1,4 +1,6 @@
-# opaque-auth
+# php-opaque-auth
+
+PHP extension `opaque-auth`. The repository is planned to move to `https://github.com/panfareast/php-opaque-auth`; the package names below use the destination vendor. Until the transfer and publication are complete, install from a local checkout.
 
 Native PHP OPAQUE protocol extension built on [`opaque-ke`](https://crates.io/crates/opaque-ke) and [`ext-php-rs`](https://ext-php.rs/), targeting PHP 8.3–8.5.
 
@@ -12,21 +14,24 @@ The default target is the same Ristretto255 suite used by `@serenity-kit/opaque`
 
 ## Install from a local checkout
 
+See the [installation guide](docs/installation.md) for PIE setup and a multi-stage
+Docker build that keeps Rust and build dependencies out of the final image.
+
 The extension can be built and installed with [PIE](https://github.com/php/pie). The test environment pins PIE 1.5.5 and Composer 2.11.1. It requires Rust 1.88+, Cargo, Clang and libclang, PHP 8.3–8.5 development headers and matching `phpize`/`php-config`, plus make, autoconf, libtool, a C compiler, and Git/unzip. Linux x86_64 non-debug NTS and ZTS builds are verified on PHP 8.3.36, 8.4.27, and 8.5.12; PIE metadata explicitly permits both thread modes. Match the runtime's PHP API, thread mode, and debug mode when building; artifacts are not interchangeable. Other architectures and debug builds are unverified. Windows and macOS installation are not supported by this Linux-only packaging.
 
 | Component | Name |
 | --- | --- |
-| Native PIE package | `engshun/opaque-auth` |
-| Composer facade package | `engshun/opaque-auth-php` |
+| Native PIE package | `panfareast/opaque-auth` |
+| Composer facade package | `panfareast/opaque-auth-php` |
 | PHP module / installed file | `opaque_auth` / `opaque_auth.so` |
 | Cargo build artifact | `libopaque_auth.so` |
 
 From the extension checkout, add it as a local PIE repository and install it for the PHP ABI you intend to use:
 
 ```sh
-pie repository:add path /absolute/path/to/opaque-auth \
+pie repository:add path /absolute/path/to/php-opaque-auth \
   --with-php-config=/path/to/php-config
-pie install 'engshun/opaque-auth:*@dev' \
+pie install 'panfareast/opaque-auth:*@dev' \
   --with-php-config=/path/to/php-config \
   --with-phpize-path=/path/to/phpize
 php --ri opaque_auth
@@ -34,24 +39,24 @@ php --ri opaque_auth
 
 The `php --ri` check should show the `opaque_auth` module. Use the `php` binary corresponding to the supplied PHP development tools. If a prerequisite is missing or the ABI does not match, resolve that environment issue before retrying; this workflow does not provide a manual-build fallback.
 
-PIE installs the native package `engshun/opaque-auth`, not a PHP autoloader. The separate library package `engshun/opaque-auth-php` loads `Opaque\Client` and `Opaque\Server` and requires the installed `ext-opaque_auth` module (a single `ext-` prefix). In your application, add the facade directory as a Composer path repository:
+PIE installs the native package `panfareast/opaque-auth`, not a PHP autoloader. The separate library package `panfareast/opaque-auth-php` loads `Opaque\Client` and `Opaque\Server` and requires the installed `ext-opaque_auth` module (a single `ext-` prefix). In your application, add the facade directory as a Composer path repository:
 
 ```json
 {
   "repositories": [
-    { "type": "path", "url": "/absolute/path/to/opaque-auth/php" }
+    { "type": "path", "url": "/absolute/path/to/php-opaque-auth/php" }
   ]
 }
 ```
 
 ```sh
-composer require 'engshun/opaque-auth-php:*@dev'
+composer require 'panfareast/opaque-auth-php:*@dev'
 ```
 
 Then load `vendor/autoload.php` in your application. Run Composer with the same PHP runtime used by your application so it can check the native extension requirement. Alternatively, explicitly include `php/Opaque.php` from the checkout. After installation, the extension must be enabled for the PHP runtime that runs the application. To remove the native extension with PIE:
 
 ```sh
-pie uninstall engshun/opaque-auth \
+pie uninstall panfareast/opaque-auth \
   --with-php-config=/path/to/php-config
 ```
 
@@ -68,7 +73,7 @@ The Cargo build artifact is `target/release/libopaque_auth.so` on Linux. For man
 Load the PHP facade before calling these methods (or use its Composer classmap autoloader):
 
 ```php
-require_once '/path/to/opaque-auth/php/Opaque.php';
+require_once '/path/to/php-opaque-auth/php/Opaque.php';
 ```
 
 ## PHP API

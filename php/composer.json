@@ -1,5 +1,6 @@
 {
-  "name": "engshun/opaque-auth-php",
+  "name": "panfareast/opaque-auth-php",
+  "homepage": "https://github.com/panfareast/php-opaque-auth",
   "description": "PHP API for the native OPAQUE authentication extension",
   "type": "library",
   "license": ["MIT", "Apache-2.0"],
