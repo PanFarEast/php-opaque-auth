@@ -1,7 +1,13 @@
-# Issue tracker: Gitea
+# Issue tracker: GitHub
 
-Issues for `engshun/php-opaque` live in Gitea (`github.com`). Use the configured Gitea MCP tools to find, read, create, and update issues.
+Issues live in `panfareast/php-opaque-auth` on GitHub. Use the authenticated GitHub CLI (`gh`) with `--repo panfareast/php-opaque-auth` for issue operations.
 
-The planned destination is `github.com/panfareast/php-opaque-auth`. Package metadata already uses that destination; continue using the current Gitea tracker until the transfer is confirmed.
+Read the full issue body and comments before starting ticket work:
 
-When MCP issue operations are unavailable, ask the user for the issue URL or instructions; do not silently create a local issue instead.
+```sh
+gh issue view <number> --repo panfareast/php-opaque-auth --comments
+```
+
+Preserve ticket dependencies and use the `ready-for-agent` label for approved work. Use `gh api` for native dependency relationships when needed.
+
+If `gh` is unavailable or authentication fails, ask the user to restore access rather than creating a local replacement ticket.
