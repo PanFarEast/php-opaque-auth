@@ -32,6 +32,9 @@ Windows and macOS packaging is unsupported.
 Register the package source and select an exact release:
 
 ```sh
+COMPOSER_HOME=$(mktemp -d)
+export COMPOSER_HOME
+printf '%s\n' '{"config":{"use-github-api":false,"github-protocols":["https"]}}' > "$COMPOSER_HOME/config.json"
 pie repository:add vcs https://github.com/panfareast/php-opaque-auth \
   --with-php-config=/path/to/php-config
 pie info 'panfareast/opaque-auth:0.1.0' --with-php-config=/path/to/php-config
@@ -57,10 +60,17 @@ archive and Git commit references. For later compatible `0.1.x` releases you
 can opt into the constraint `^0.1`, but an exact version avoids changing releases
 between builds. Do not move published tags; publish a new version instead.
 
+The temporary Composer settings directory leaves your existing configuration
+untouched. PIE reads those settings internally; the Composer CLI is not required.
+Keep `COMPOSER_HOME` exported for these commands. Disabling the GitHub API driver
+uses public Git over HTTPS to discover tags, avoiding API quotas and SSH
+credential fallback. Source/archive metadata still refers to the exact tag
+commit, but installation does not need GitHub API authentication.
+
 If PIE cannot find the package, check that the VCS repository was registered for
 the same target `php-config`. PIE's default Packagist repository does not contain
-this package. Anonymous GitHub API access is rate-limited; if a limit is reached,
-retry after it resets. This route does not require distributing credentials.
+this package. If you see API authentication or SSH errors, confirm that the
+transport settings above are active in that process before retrying.
 
 ### Optional local development checkout
 
@@ -127,7 +137,8 @@ COPY --from=rust-toolchain /usr/local/rustup /usr/local/rustup
 ENV CARGO_HOME=/usr/local/cargo \
     RUSTUP_HOME=/usr/local/rustup \
     PATH=/usr/local/cargo/bin:$PATH \
-    COMPOSER_ALLOW_SUPERUSER=1
+    COMPOSER_ALLOW_SUPERUSER=1 \
+    COMPOSER_HOME=/tmp/opaque-auth-composer
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
@@ -143,7 +154,9 @@ RUN curl --retry 3 --retry-all-errors -fsSL \
 
 ARG OPAQUE_VERSION=0.1.0
 WORKDIR /build
-RUN pie repository:add vcs https://github.com/panfareast/php-opaque-auth --no-interaction \
+RUN mkdir -p "$COMPOSER_HOME" \
+    && printf '%s\n' '{"config":{"use-github-api":false,"github-protocols":["https"]}}' > "$COMPOSER_HOME/config.json" \
+    && pie repository:add vcs https://github.com/panfareast/php-opaque-auth --no-interaction \
         --with-php-config=/usr/local/bin/php-config \
     && pie install "panfareast/opaque-auth:${OPAQUE_VERSION}" --no-interaction \
         --with-php-config=/usr/local/bin/php-config \
@@ -242,6 +255,16 @@ Maintainers publish Git tags, not Packagist packages. For each stable release:
    against the tag commit, ABI, native registration/login, and removal.
 4. Treat published tags as immutable. If release verification fails, investigate
    and publish any necessary fix as a new version rather than moving the tag.
+
+When only verification tooling or documentation needs correction, leave the
+published package/tag unchanged and verify it with the updated harness on main:
+
+```sh
+gh workflow run checks.yml --repo panfareast/php-opaque-auth --ref main -f release_tag=v0.1.0
+```
+
+The manual run resolves the selected tag's commit independently of the harness
+commit and uses the same six-row anonymous-install matrix.
 
 This route needs no Packagist dashboard or ownership claim. If a maintainer uses
 third-party signing, ownership, or credentials in the future, those steps and

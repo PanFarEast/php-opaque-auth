@@ -28,6 +28,9 @@ The extension can be built and installed with [PIE](https://github.com/php/pie).
 Add the public GitHub repository to PIE and install the exact release for your PHP ABI. No local source checkout, Packagist submission, or GitHub token is required:
 
 ```sh
+COMPOSER_HOME=$(mktemp -d)
+export COMPOSER_HOME
+printf '%s\n' '{"config":{"use-github-api":false,"github-protocols":["https"]}}' > "$COMPOSER_HOME/config.json"
 pie repository:add vcs https://github.com/panfareast/php-opaque-auth \
   --with-php-config=/path/to/php-config
 pie install 'panfareast/opaque-auth:0.1.0' \
@@ -39,6 +42,8 @@ php --ri opaque_auth
 The `php --ri` check should show the `opaque_auth` module. Use the `php` binary corresponding to the supplied PHP development tools. If a prerequisite is missing or the ABI does not match, resolve that environment issue before retrying; this workflow does not provide a manual-build fallback.
 
 PIE discovers the Composer package version `0.1.0` from the Git tag `v0.1.0`; it downloads that release's source and compiles it. These are not prebuilt binaries. For development-checkout installation, see the [installation guide](docs/installation.md#optional-local-development-checkout).
+
+The temporary Composer configuration uses public Git over HTTPS for discovery, avoiding anonymous GitHub API quotas and SSH credential fallback. No Composer CLI or token is needed; keep `COMPOSER_HOME` exported for the PIE commands above.
 
 PIE installs the native package `panfareast/opaque-auth`. Enabling the extension directly provides `Opaque\Client` and `Opaque\Server` as native PHP classes: no Composer package, autoloader, or PHP include is required. Composer-managed applications may declare `ext-opaque_auth` (a single `ext-` prefix) as a platform requirement.
 

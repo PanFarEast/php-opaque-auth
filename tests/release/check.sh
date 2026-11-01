@@ -17,6 +17,9 @@ export HOME="$work/home" COMPOSER_HOME="$work/composer" COMPOSER_ALLOW_SUPERUSER
 export XDG_CONFIG_HOME="$work/config" XDG_DATA_HOME="$work/data" XDG_CACHE_HOME="$work/cache"
 unset GH_TOKEN GITHUB_TOKEN COMPOSER_AUTH
 mkdir -p "$HOME" "$COMPOSER_HOME"
+# Use Git over HTTPS for public discovery. Composer's GitHub API driver can
+# exhaust anonymous quotas and then fall back to SSH, which requires credentials.
+printf '%s\n' '{"config":{"use-github-api":false,"github-protocols":["https"]}}' > "$COMPOSER_HOME/config.json"
 cd "$work"
 
 # This harness contains tests only: source must come from the public repository.

@@ -2,6 +2,13 @@ name: Checks
 on:
   push:
   pull_request:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Existing stable tag to verify anonymously
+        required: true
+        default: v0.1.0
+        type: string
 
 permissions:
   contents: read
@@ -26,7 +33,7 @@ jobs:
 
   release-install:
     # The release harness verifies stable vX.Y.Z tags, not prereleases/build metadata.
-    if: startsWith(github.ref, 'refs/tags/v') && !contains(github.ref_name, '-') && !contains(github.ref_name, '+')
+    if: github.event_name == 'workflow_dispatch' || (startsWith(github.ref, 'refs/tags/v') && !contains(github.ref_name, '-') && !contains(github.ref_name, '+'))
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -40,11 +47,16 @@ jobs:
       - name: Install the public tagged version without a source checkout
         shell: bash
         env:
-          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_TAG: ${{ inputs.release_tag || github.ref_name }}
         run: |
           set -o pipefail
+          if [[ ! "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo 'Select a stable vX.Y.Z release tag.' >&2
+            exit 1
+          fi
           export OPAQUE_RELEASE_VERSION="${RELEASE_TAG#v}"
-          OPAQUE_RELEASE_COMMIT=$(git rev-parse HEAD)
+          git fetch --no-tags --depth=1 origin "refs/tags/$RELEASE_TAG:refs/tags/$RELEASE_TAG"
+          OPAQUE_RELEASE_COMMIT=$(git rev-parse "refs/tags/$RELEASE_TAG^{commit}")
           export OPAQUE_RELEASE_COMMIT
           tar -cf - tests/abi.php tests/runtime.php tests/pie/enabled.php tests/pie/installed.php tests/release |
             docker run --rm -i -e OPAQUE_RELEASE_VERSION -e OPAQUE_RELEASE_COMMIT -e OPAQUE_TEST_PHP_VERSION=${{ matrix.php }} -e OPAQUE_TEST_PHP_VARIANT=${{ matrix.variant }} opaque-release:${{ matrix.php }}-${{ matrix.variant }} sh -c 'mkdir -p /harness && tar -xf - -C /harness && sh /harness/tests/release/check.sh'
