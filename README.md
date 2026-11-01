@@ -22,7 +22,6 @@ The extension can be built and installed with [PIE](https://github.com/php/pie).
 | Component | Name |
 | --- | --- |
 | Native PIE package | `panfareast/opaque-auth` |
-| Composer facade package | `panfareast/opaque-auth-php` |
 | PHP module / installed file | `opaque_auth` / `opaque_auth.so` |
 | Cargo build artifact | `libopaque_auth.so` |
 
@@ -39,21 +38,9 @@ php --ri opaque_auth
 
 The `php --ri` check should show the `opaque_auth` module. Use the `php` binary corresponding to the supplied PHP development tools. If a prerequisite is missing or the ABI does not match, resolve that environment issue before retrying; this workflow does not provide a manual-build fallback.
 
-PIE installs the native package `panfareast/opaque-auth`, not a PHP autoloader. The separate library package `panfareast/opaque-auth-php` loads `Opaque\Client` and `Opaque\Server` and requires the installed `ext-opaque_auth` module (a single `ext-` prefix). In your application, add the facade directory as a Composer path repository:
+PIE installs the native package `panfareast/opaque-auth`. Enabling the extension directly provides `Opaque\Client` and `Opaque\Server` as native PHP classes: no Composer package, autoloader, or PHP include is required. Composer-managed applications may declare `ext-opaque_auth` (a single `ext-` prefix) as a platform requirement.
 
-```json
-{
-  "repositories": [
-    { "type": "path", "url": "/absolute/path/to/php-opaque-auth/php" }
-  ]
-}
-```
-
-```sh
-composer require 'panfareast/opaque-auth-php:*@dev'
-```
-
-Then load `vendor/autoload.php` in your application. Run Composer with the same PHP runtime used by your application so it can check the native extension requirement. Alternatively, explicitly include `php/Opaque.php` from the checkout. After installation, the extension must be enabled for the PHP runtime that runs the application. To remove the native extension with PIE:
+After installation, the extension must be enabled for the PHP runtime that runs the application. To remove the native extension with PIE:
 
 ```sh
 pie uninstall panfareast/opaque-auth \
@@ -68,13 +55,7 @@ Requirements: Rust 1.88+ (needed by the PHP 8.5-capable `ext-php-rs` dependency)
 cargo build --release
 ```
 
-The Cargo build artifact is `target/release/libopaque_auth.so` on Linux. For manual loading, use PHP's `extension=` directive with the built library; the registered module name is `opaque_auth`. The `Opaque\Client` and `Opaque\Server` static methods accept associative arrays with Serenity Kit's field names and return associative arrays.
-
-Load the PHP facade before calling these methods (or use its Composer classmap autoloader):
-
-```php
-require_once '/path/to/php-opaque-auth/php/Opaque.php';
-```
+The Cargo build artifact is `target/release/libopaque_auth.so` on Linux. For manual loading, use PHP's `extension=` directive with the built library; the registered module name is `opaque_auth`. Its native `Opaque\Client` and `Opaque\Server` static methods accept associative arrays with Serenity Kit's field names and return associative arrays. No PHP facade needs to be loaded.
 
 ## PHP API
 

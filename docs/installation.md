@@ -1,8 +1,8 @@
 # Installing opaque-auth
 
 The native extension is `panfareast/opaque-auth`; its PHP module is `opaque_auth`.
-The optional PHP facade is the separate Composer package
-`panfareast/opaque-auth-php`.
+Enabling it provides native `Opaque\Client` and `Opaque\Server` classes directly;
+Composer and manually loading PHP files are not required.
 
 The repository is planned to move to
 `https://github.com/panfareast/php-opaque-auth`. Until that transfer and package
@@ -20,7 +20,8 @@ do not assume the packages are already available on Packagist.
 - Clang and libclang, a C compiler, make, autoconf, and libtool.
 - Git and unzip for package installation.
 - [PIE](https://github.com/php/pie); the verified version is 1.5.5.
-- Composer if you want the PHP facade; the verified version is 2.11.1.
+- Composer is optional for application dependency management, not required to
+  use the native API.
 
 Linux x86_64 non-debug NTS and ZTS builds have been verified on PHP 8.3.36,
 8.4.27, and 8.5.12. Other architectures and debug builds are unverified;
@@ -49,31 +50,25 @@ your application, not only in the CLI.
 PIE currently builds this package from source; it does not download a prebuilt
 extension. Missing prerequisites must be installed before retrying.
 
-### Install the PHP facade
+### Use the native API
 
-PIE installs the native module, not a Composer autoloader. In your application's
-`composer.json`, add the facade directory as a path repository, preserving any
-existing repositories:
-
-```json
-{
-  "repositories": [
-    { "type": "path", "url": "/absolute/path/to/php-opaque-auth/php" }
-  ]
-}
-```
-
-Then run Composer with the PHP runtime that has the extension enabled:
+No autoloader or PHP include is needed:
 
 ```sh
-composer require 'panfareast/opaque-auth-php:*@dev'
-php -r 'require "vendor/autoload.php"; exit(class_exists("Opaque\\Client") && class_exists("Opaque\\Server") ? 0 : 1);'
+/path/to/php -r 'exit((new ReflectionClass("Opaque\\Client"))->isInternal() && (new ReflectionClass("Opaque\\Server"))->isInternal() ? 0 : 1);'
 ```
 
-The facade requires `ext-opaque_auth` (one `ext-` prefix). Include
-`vendor/autoload.php` in your application to use `Opaque\Client` and
-`Opaque\Server`. Alternatively, explicitly require `php/Opaque.php` from the
-checkout; the native extension must still be loaded.
+Call the classes directly; see the [registration and login examples](../README.md#php-api).
+Composer-managed applications may require `ext-opaque_auth` (one `ext-` prefix)
+so dependency installation checks for the enabled module. Run Composer with the
+same PHP runtime used by the application.
+
+If upgrading an earlier unpublished checkout, rebuild the extension and remove
+old `php/Opaque.php` includes or the local facade dependency. Older copies with
+unconditional class declarations conflict with native classes when explicitly
+included; the current checkout guards those declarations. Public calls and
+serialized protocol state remain unchanged. Keep your application's autoloader
+for unrelated dependencies.
 
 ### Remove the native extension
 
@@ -81,8 +76,7 @@ checkout; the native extension must still be loaded.
 pie uninstall panfareast/opaque-auth --with-php-config=/path/to/php-config
 ```
 
-Restart long-running PHP processes again after removal. The Composer facade is
-a separate package; remove it with Composer if it is no longer needed.
+Restart long-running PHP processes again after removal.
 
 ## Docker: build with Rust, run without it
 
@@ -138,8 +132,8 @@ RUN cp /tmp/opaque_auth.so "$(php-config --extension-dir)/opaque_auth.so" \
     && docker-php-ext-enable opaque_auth \
     && php --ri opaque_auth
 
-# Optional facade, loaded explicitly; no Composer needed in the final image.
-COPY php/Opaque.php /opt/opaque-auth/Opaque.php
+# Native public classes are available without copying any PHP facade.
+RUN php -r 'exit((new ReflectionClass("Opaque\\Client"))->isInternal() && (new ReflectionClass("Opaque\\Server"))->isInternal() ? 0 : 1);'
 ```
 
 Build and verify from the checkout root:
@@ -147,13 +141,14 @@ Build and verify from the checkout root:
 ```sh
 docker build -t php-opaque-auth:local .
 docker run --rm php-opaque-auth:local php --ri opaque_auth
-docker run --rm php-opaque-auth:local php -r 'require "/opt/opaque-auth/Opaque.php"; exit(class_exists("Opaque\\Client") && class_exists("Opaque\\Server") ? 0 : 1);'
+docker run --rm -i php-opaque-auth:local php < tests/php/native.php
 docker run --rm php-opaque-auth:local sh -c '! command -v rustc && ! command -v cargo && ! command -v clang && ! command -v pie'
 ```
 
 The example uses Debian Bookworm official PHP images, whose development tools
 are available in the builder. The final image is the original PHP base plus
-the extension, enablement INI, and optional facade; this is not a claim that the
+the extension and enablement INI; the stdin smoke test completes registration and
+login with matching keys using only native classes. This is not a claim that the
 upstream PHP base itself contains no development utilities.
 
 For another verified PHP minor or thread mode, change the shared base:
@@ -171,19 +166,18 @@ extension when updating the PHP base.
 
 ### Integrating your application
 
-The example copies the facade alone; application code can load it with:
+Call the public classes directly; no `require` statement is necessary:
 
 ```php
-require_once '/opt/opaque-auth/Opaque.php';
+$setup = Opaque\Server::createSetup();
 ```
 
-If your application uses Composer instead, install its dependencies in a
+If your application uses Composer for other dependencies, install them in a
 separate application build stage where this native extension is enabled, then
-copy the application and `vendor/` into the runtime image. For a local Composer
-path repository, use `"options": { "symlink": false }` so the resulting vendor
-directory contains the facade rather than a symlink to a builder-only checkout.
-Keep `ext-opaque_auth` enabled in the final image; bypassing Composer's platform
-checks is not a substitute for installing it.
+copy the application and `vendor/` into the runtime image. No facade dependency
+is needed. Keep `ext-opaque_auth`
+enabled in the final image; bypassing Composer's platform checks is not a
+substitute for installing it.
 
 ### ABI and shared-library failures
 
