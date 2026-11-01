@@ -59,6 +59,9 @@ The Cargo build artifact is `target/release/libopaque_auth.so` on Linux. For man
 
 ## PHP API
 
+For IDE autocomplete and array-shape inference, use the development-only
+[PHP stubs](stubs/README.md). They are not loaded at runtime.
+
 Registration:
 
 ```php
