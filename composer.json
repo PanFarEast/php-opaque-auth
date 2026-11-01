@@ -12,6 +12,6 @@
     "support-zts": true,
     "support-nts": true,
     "build-path": "pie",
-    "os-families": ["linux"]
+    "os-families": ["linux", "darwin"]
   }
 }

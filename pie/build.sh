@@ -38,9 +38,25 @@ esac
 destination=$2
 root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 cd "$root"
+
+build_target=${CARGO_BUILD_TARGET:-$(rustc -vV | sed -n 's/^host: //p')}
+case "$build_target" in
+    *-apple-darwin)
+        # PHP resolves extension API symbols from the hosting process at load time.
+        RUSTFLAGS="${RUSTFLAGS:+$RUSTFLAGS }-C link-arg=-undefined -C link-arg=dynamic_lookup"
+        export RUSTFLAGS
+        artifact_suffix=dylib
+        ;;
+    *-linux-*) artifact_suffix=so ;;
+    *) fail "Unsupported build target '$build_target'; supported targets are Linux and Darwin." ;;
+esac
+
 cargo build --release --locked
 target=${CARGO_TARGET_DIR:-target}
-artifact="$target/release/libopaque_auth.so"
-test -f "$artifact" || fail 'The native Linux shared library was not produced.'
+artifact="$target/$build_target/release/libopaque_auth.$artifact_suffix"
+if [ -z "${CARGO_BUILD_TARGET:-}" ]; then
+    artifact="$target/release/libopaque_auth.$artifact_suffix"
+fi
+test -f "$artifact" || fail 'The native extension library was not produced.'
 mkdir -p "$destination"
 cp "$artifact" "$destination/opaque_auth.so"

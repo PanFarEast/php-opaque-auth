@@ -13,7 +13,7 @@ to install. You do not need a local source checkout or a GitHub token.
 
 ### Prerequisites
 
-- Linux and PHP 8.3, 8.4, or 8.5.
+- Linux or Darwin, with PHP 8.3, 8.4, or 8.5.
 - PHP development headers, `phpize`, and `php-config` matching the PHP runtime
   that will load the extension, including its NTS/ZTS and debug mode.
 - Rust 1.88 or newer and Cargo.
@@ -24,8 +24,9 @@ to install. You do not need a local source checkout or a GitHub token.
   use the native API.
 
 Linux x86_64 non-debug NTS and ZTS builds have been verified on PHP 8.3.36,
-8.4.27, and 8.5.12. Other architectures and debug builds are unverified;
-Windows and macOS packaging is unsupported.
+8.4.27, and 8.5.12. Darwin builds are supported by the build script but
+unverified. Other architectures and debug builds are unverified; Windows is
+unsupported.
 
 ### Install and enable a tagged release
 
@@ -45,8 +46,9 @@ pie install 'panfareast/opaque-auth:0.1.0' \
 ```
 
 Replace all PHP paths with tools from the same PHP installation. PIE compiles
-the Rust library, installs `opaque_auth.so`, and enables the module. It needs
-permission to write that installation's extension and INI directories.
+the Rust library, installs `opaque_auth.so`, and enables the module. On Darwin,
+the Cargo `.dylib` artifact is installed under PHP's `.so` extension filename.
+It needs permission to write that installation's extension and INI directories.
 Restart long-running PHP processes after installation. CLI and FPM may use
 different INI directories: verify that the module is enabled in the SAPI serving
 your application, not only in the CLI.

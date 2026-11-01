@@ -17,13 +17,13 @@ The default target is the same Ristretto255 suite used by `@serenity-kit/opaque`
 See the [installation guide](docs/installation.md) for PIE setup and a multi-stage
 Docker build that keeps Rust and build dependencies out of the final image.
 
-The extension can be built and installed with [PIE](https://github.com/php/pie). The test environment pins PIE 1.5.5 and Composer 2.11.1. It requires Rust 1.88+, Cargo, Clang and libclang, PHP 8.3–8.5 development headers and matching `phpize`/`php-config`, plus make, autoconf, libtool, a C compiler, and Git/unzip. Linux x86_64 non-debug NTS and ZTS builds are verified on PHP 8.3.36, 8.4.27, and 8.5.12; PIE metadata explicitly permits both thread modes. Match the runtime's PHP API, thread mode, and debug mode when building; artifacts are not interchangeable. Other architectures and debug builds are unverified. Windows and macOS installation are not supported by this Linux-only packaging.
+The extension can be built and installed with [PIE](https://github.com/php/pie). The test environment pins PIE 1.5.5 and Composer 2.11.1. It requires Rust 1.88+, Cargo, Clang and libclang, PHP 8.3–8.5 development headers and matching `phpize`/`php-config`, plus make, autoconf, libtool, a C compiler, and Git/unzip. Linux x86_64 non-debug NTS and ZTS builds are verified on PHP 8.3.36, 8.4.27, and 8.5.12; PIE metadata explicitly permits both thread modes. Darwin builds are supported by the build script but unverified. Match the runtime's PHP API, thread mode, and debug mode when building; artifacts are not interchangeable. Other architectures and debug builds are unverified. Windows is not supported.
 
 | Component | Name |
 | --- | --- |
 | Native PIE package | `panfareast/opaque-auth` |
 | PHP module / installed file | `opaque_auth` / `opaque_auth.so` |
-| Cargo build artifact | `libopaque_auth.so` |
+| Cargo build artifact | `libopaque_auth.so` (Linux), `libopaque_auth.dylib` (Darwin) |
 
 Add the public GitHub repository to PIE and install the exact release for your PHP ABI. No local source checkout, Packagist submission, or GitHub token is required:
 
@@ -62,7 +62,7 @@ Requirements: Rust 1.88+ (needed by the PHP 8.5-capable `ext-php-rs` dependency)
 cargo build --release
 ```
 
-The Cargo build artifact is `target/release/libopaque_auth.so` on Linux. For manual loading, use PHP's `extension=` directive with the built library; the registered module name is `opaque_auth`. Its native `Opaque\Client` and `Opaque\Server` static methods accept associative arrays with Serenity Kit's field names and return associative arrays. No PHP facade needs to be loaded.
+The Cargo build artifact is `target/release/libopaque_auth.so` on Linux and `target/release/libopaque_auth.dylib` on Darwin. For manual loading, use PHP's `extension=` directive with the built library; the registered module name is `opaque_auth`. Its native `Opaque\Client` and `Opaque\Server` static methods accept associative arrays with Serenity Kit's field names and return associative arrays. No PHP facade needs to be loaded.
 
 ## PHP API
 
