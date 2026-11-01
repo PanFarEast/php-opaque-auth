@@ -3,6 +3,9 @@ on:
   push:
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   php:
     runs-on: ubuntu-latest
@@ -12,7 +15,7 @@ jobs:
         php: ['8.3', '8.4', '8.5']
         variant: ['cli', 'zts']
     steps:
-      - uses: https://github.com/actions/checkout@v4
+      - uses: actions/checkout@v4
       - name: Build PHP and Rust test environment
         run: docker build --build-arg PHP_VERSION=${{ matrix.php }} --build-arg PHP_VARIANT=${{ matrix.variant }} -t opaque-check:${{ matrix.php }}-${{ matrix.variant }} -f tests/Dockerfile .
       - name: Check extension, interoperability, and local PIE installation
