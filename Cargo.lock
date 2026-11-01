@@ -580,7 +580,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "ext-opaque-auth"
+name = "opaque-auth"
 version = "0.1.0"
 dependencies = [
  "argon2",

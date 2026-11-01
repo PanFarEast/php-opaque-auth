@@ -1,5 +1,5 @@
 {
-  "name": "ext-opaque-auth-interop-tests",
+  "name": "opaque-auth-interop-tests",
   "private": true,
   "type": "module",
   "scripts": {

@@ -2,6 +2,9 @@
 declare(strict_types=1);
 
 require $argv[1];
+require_once __DIR__ . '/../abi.php';
+verifyTargetRuntime();
+verifyModuleAbi(ini_get('extension_dir') . '/opaque_auth.so');
 
 function verifyInstalled(bool $condition, string $message): void
 {

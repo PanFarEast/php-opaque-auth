@@ -1,7 +1,8 @@
 ARG PHP_VERSION=8.3
+ARG PHP_VARIANT=cli
 FROM rust:1.88-bookworm AS rust
 
-FROM php:${PHP_VERSION}-cli-bookworm
+FROM php:${PHP_VERSION}-${PHP_VARIANT}-bookworm
 COPY --from=rust /usr/local/cargo /usr/local/cargo
 COPY --from=rust /usr/local/rustup /usr/local/rustup
 ENV CARGO_HOME=/usr/local/cargo \
@@ -20,4 +21,8 @@ RUN curl --retry 3 --retry-all-errors -fsSL https://github.com/php/pie/releases/
     && echo '6f1b891e1d4927d62740276c540fb490e47689e19e102c49e8da849794882f8c  /usr/local/bin/composer' | sha256sum -c - \
     && chmod +x /usr/local/bin/pie /usr/local/bin/composer
 ENV OPAQUE_PIE_TEST_CONTAINER=1
+ARG PHP_VERSION
+ARG PHP_VARIANT
+ENV OPAQUE_TEST_PHP_VERSION=${PHP_VERSION} \
+    OPAQUE_TEST_PHP_VARIANT=${PHP_VARIANT}
 WORKDIR /work

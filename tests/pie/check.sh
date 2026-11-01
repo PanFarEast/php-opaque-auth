@@ -20,7 +20,7 @@ php "$root/tests/pie/enabled.php" 0
 pie --version
 composer --version
 pie repository:add path "$root" --no-interaction --with-php-config="$(command -v php-config)"
-pie install 'engshun/ext-opaque-auth:*@dev' --no-interaction \
+pie install 'engshun/opaque-auth:*@dev' --no-interaction \
     --with-php-config="$(command -v php-config)" \
     --with-phpize-path="$(command -v phpize)"
 php --ri opaque_auth
@@ -30,24 +30,24 @@ php -r '
 $root = $argv[1];
 file_put_contents("composer.json", json_encode([
     "repositories" => [["type" => "path", "url" => $root . "/php"]],
-    "require" => ["engshun/opaque-auth" => "*@dev"],
+    "require" => ["engshun/opaque-auth-php" => "*@dev"],
 ], JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT));
 ' "$root"
 composer install --no-interaction --no-progress
 php -d zend.exception_ignore_args=1 "$root/tests/pie/installed.php" "$work/app/vendor/autoload.php"
 php "$root/tests/pie/enabled.php" 1
 
-pie uninstall engshun/ext-opaque-auth --no-interaction \
+pie uninstall engshun/opaque-auth --no-interaction \
     --with-php-config="$(command -v php-config)"
 php "$root/tests/pie/enabled.php" 0
 
 sh "$root/tests/pie/prerequisites.sh"
 
-pie install 'engshun/ext-opaque-auth:*@dev' --no-interaction \
+pie install 'engshun/opaque-auth:*@dev' --no-interaction \
     --with-php-config="$(command -v php-config)" \
     --with-phpize-path="$(command -v phpize)"
 php "$root/tests/pie/enabled.php" 1
 php -d zend.exception_ignore_args=1 "$root/tests/pie/installed.php" "$work/app/vendor/autoload.php"
-pie uninstall engshun/ext-opaque-auth --no-interaction \
+pie uninstall engshun/opaque-auth --no-interaction \
     --with-php-config="$(command -v php-config)"
 php "$root/tests/pie/enabled.php" 0

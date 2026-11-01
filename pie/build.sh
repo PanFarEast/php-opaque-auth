@@ -40,7 +40,7 @@ root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 cd "$root"
 cargo build --release --locked
 target=${CARGO_TARGET_DIR:-target}
-artifact="$target/release/libext_opaque_auth.so"
+artifact="$target/release/libopaque_auth.so"
 test -f "$artifact" || fail 'The native Linux shared library was not produced.'
 mkdir -p "$destination"
 cp "$artifact" "$destination/opaque_auth.so"

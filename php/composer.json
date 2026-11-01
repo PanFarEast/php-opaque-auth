@@ -1,5 +1,5 @@
 {
-  "name": "engshun/opaque-auth",
+  "name": "engshun/opaque-auth-php",
   "description": "PHP API for the native OPAQUE authentication extension",
   "type": "library",
   "license": ["MIT", "Apache-2.0"],

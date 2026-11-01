@@ -1,5 +1,5 @@
 {
-  "name": "engshun/ext-opaque-auth",
+  "name": "engshun/opaque-auth",
   "description": "OPAQUE password authentication for PHP, built with Rust",
   "type": "php-ext",
   "license": ["MIT", "Apache-2.0"],
@@ -8,6 +8,8 @@
   },
   "php-ext": {
     "extension-name": "opaque_auth",
+    "support-zts": true,
+    "support-nts": true,
     "build-path": "pie",
     "os-families": ["linux"]
   }

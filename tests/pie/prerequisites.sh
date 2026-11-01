@@ -107,7 +107,7 @@ EOF
         cd "$case_dir"
         "$pie_bin" repository:add path "$fixture" --no-interaction \
             --with-php-config="$php_config_arg" &&
-        "$pie_bin" install 'engshun/ext-opaque-auth:*@dev' --no-interaction \
+        "$pie_bin" install 'engshun/opaque-auth:*@dev' --no-interaction \
             --with-php-config="$php_config_arg" \
             --with-phpize-path="$phpize_arg"
     ) >"$log" 2>&1

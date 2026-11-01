@@ -1,4 +1,4 @@
-# ext-opaque-auth
+# opaque-auth
 
 Native PHP OPAQUE protocol extension built on [`opaque-ke`](https://crates.io/crates/opaque-ke) and [`ext-php-rs`](https://ext-php.rs/), targeting PHP 8.3–8.5.
 
@@ -12,21 +12,21 @@ The default target is the same Ristretto255 suite used by `@serenity-kit/opaque`
 
 ## Install from a local checkout
 
-The extension can be built and installed with [PIE](https://github.com/php/pie). The test environment pins PIE 1.5.5 and Composer 2.11.1. It requires Rust 1.88+, Cargo, Clang and libclang, PHP 8.3–8.5 development headers and matching `phpize`/`php-config`, plus make, autoconf, libtool, a C compiler, and Git/unzip. The installation CI targets NTS PHP on Linux. ZTS verification is tracked separately; it is not disabled in PIE metadata. Windows and macOS installation are not supported by this Linux-only packaging.
+The extension can be built and installed with [PIE](https://github.com/php/pie). The test environment pins PIE 1.5.5 and Composer 2.11.1. It requires Rust 1.88+, Cargo, Clang and libclang, PHP 8.3–8.5 development headers and matching `phpize`/`php-config`, plus make, autoconf, libtool, a C compiler, and Git/unzip. Linux x86_64 non-debug NTS and ZTS builds are verified on PHP 8.3.36, 8.4.27, and 8.5.12; PIE metadata explicitly permits both thread modes. Match the runtime's PHP API, thread mode, and debug mode when building; artifacts are not interchangeable. Other architectures and debug builds are unverified. Windows and macOS installation are not supported by this Linux-only packaging.
 
 | Component | Name |
 | --- | --- |
-| Native PIE package | `engshun/ext-opaque-auth` |
-| Composer facade package | `engshun/opaque-auth` |
+| Native PIE package | `engshun/opaque-auth` |
+| Composer facade package | `engshun/opaque-auth-php` |
 | PHP module / installed file | `opaque_auth` / `opaque_auth.so` |
-| Cargo build artifact | `libext_opaque_auth.so` |
+| Cargo build artifact | `libopaque_auth.so` |
 
 From the extension checkout, add it as a local PIE repository and install it for the PHP ABI you intend to use:
 
 ```sh
-pie repository:add path /absolute/path/to/ext-opaque-auth \
+pie repository:add path /absolute/path/to/opaque-auth \
   --with-php-config=/path/to/php-config
-pie install 'engshun/ext-opaque-auth:*@dev' \
+pie install 'engshun/opaque-auth:*@dev' \
   --with-php-config=/path/to/php-config \
   --with-phpize-path=/path/to/phpize
 php --ri opaque_auth
@@ -34,24 +34,24 @@ php --ri opaque_auth
 
 The `php --ri` check should show the `opaque_auth` module. Use the `php` binary corresponding to the supplied PHP development tools. If a prerequisite is missing or the ABI does not match, resolve that environment issue before retrying; this workflow does not provide a manual-build fallback.
 
-PIE installs the native package `engshun/ext-opaque-auth`, not a PHP autoloader. The separate library package `engshun/opaque-auth` loads `Opaque\Client` and `Opaque\Server` and requires the installed `ext-opaque_auth` module. In your application, add the facade directory as a Composer path repository:
+PIE installs the native package `engshun/opaque-auth`, not a PHP autoloader. The separate library package `engshun/opaque-auth-php` loads `Opaque\Client` and `Opaque\Server` and requires the installed `ext-opaque_auth` module (a single `ext-` prefix). In your application, add the facade directory as a Composer path repository:
 
 ```json
 {
   "repositories": [
-    { "type": "path", "url": "/absolute/path/to/ext-opaque-auth/php" }
+    { "type": "path", "url": "/absolute/path/to/opaque-auth/php" }
   ]
 }
 ```
 
 ```sh
-composer require 'engshun/opaque-auth:*@dev'
+composer require 'engshun/opaque-auth-php:*@dev'
 ```
 
 Then load `vendor/autoload.php` in your application. Run Composer with the same PHP runtime used by your application so it can check the native extension requirement. Alternatively, explicitly include `php/Opaque.php` from the checkout. After installation, the extension must be enabled for the PHP runtime that runs the application. To remove the native extension with PIE:
 
 ```sh
-pie uninstall engshun/ext-opaque-auth \
+pie uninstall engshun/opaque-auth \
   --with-php-config=/path/to/php-config
 ```
 
@@ -63,12 +63,12 @@ Requirements: Rust 1.88+ (needed by the PHP 8.5-capable `ext-php-rs` dependency)
 cargo build --release
 ```
 
-The Cargo build artifact is `target/release/libext_opaque_auth.so` on Linux. For manual loading, use PHP's `extension=` directive with the built library; the registered module name is `opaque_auth`. The `Opaque\Client` and `Opaque\Server` static methods accept associative arrays with Serenity Kit's field names and return associative arrays.
+The Cargo build artifact is `target/release/libopaque_auth.so` on Linux. For manual loading, use PHP's `extension=` directive with the built library; the registered module name is `opaque_auth`. The `Opaque\Client` and `Opaque\Server` static methods accept associative arrays with Serenity Kit's field names and return associative arrays.
 
 Load the PHP facade before calling these methods (or use its Composer classmap autoloader):
 
 ```php
-require_once '/path/to/ext-opaque-auth/php/Opaque.php';
+require_once '/path/to/opaque-auth/php/Opaque.php';
 ```
 
 ## PHP API
@@ -145,8 +145,8 @@ cargo clippy --all-targets -- -D warnings
 The complete checks include PHP flows, malformed-input failures, JavaScript interoperability, and local PIE install/remove/reinstall with missing-prerequisite checks. Installation checks modify the disposable container's extension directory and INI files; they refuse to run without its explicit test-container marker.
 
 ```sh
-docker build --build-arg PHP_VERSION=8.3 -t opaque-check -f tests/Dockerfile .
-docker run --rm -v "$PWD:/work" opaque-check sh tests/check.sh
+docker build --build-arg PHP_VERSION=8.3 --build-arg PHP_VARIANT=zts -t opaque-check:8.3-zts -f tests/Dockerfile .
+docker run --rm -v "$PWD:/work" opaque-check:8.3-zts sh tests/check.sh
 ```
 
-The Gitea Actions workflow runs the same checks for PHP 8.3, 8.4, and 8.5 on a Docker-capable runner. Cross-runtime tests exchange registration and login messages in both client/server directions, checking shared keys and encoding. Tests cover the memory-constrained/default and a custom KSF; the approximately 2 GiB RFC profile is not exercised. No compatibility is claimed for `@serenity-kit/opaque-p256` or for untested package versions/configurations.
+The Gitea Actions workflow runs the same checks for PHP 8.3, 8.4, and 8.5 in both NTS (`PHP_VARIANT=cli`) and ZTS (`PHP_VARIANT=zts`) modes on a Docker-capable runner. Tests verify the requested runtime version/thread mode and the debug and installed release artifacts' module build IDs. Default Cargo target directories are isolated by PHP version and variant. Cross-runtime tests exchange registration and login messages in both client/server directions, checking shared keys and encoding. Tests cover the memory-constrained/default and a custom KSF; the approximately 2 GiB RFC profile is not exercised. No compatibility is claimed for `@serenity-kit/opaque-p256` or for untested package versions/configurations.
