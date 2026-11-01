@@ -1,0 +1,13 @@
+{
+  "name": "engshun/opaque-auth",
+  "description": "PHP API for the native OPAQUE authentication extension",
+  "type": "library",
+  "license": ["MIT", "Apache-2.0"],
+  "require": {
+    "php": ">=8.3 <8.6",
+    "ext-opaque_auth": "*"
+  },
+  "autoload": {
+    "classmap": ["Opaque.php"]
+  }
+}

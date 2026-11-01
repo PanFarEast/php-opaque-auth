@@ -1,13 +1,14 @@
 {
   "name": "engshun/ext-opaque-auth",
-  "description": "PHP facade for the native OPAQUE extension",
-  "type": "library",
+  "description": "OPAQUE password authentication for PHP, built with Rust",
+  "type": "php-ext",
   "license": ["MIT", "Apache-2.0"],
   "require": {
-    "php": ">=8.3",
-    "ext-ext-opaque-auth": "*"
+    "php": ">=8.3 <8.6"
   },
-  "autoload": {
-    "classmap": ["php/"]
+  "php-ext": {
+    "extension-name": "opaque_auth",
+    "build-path": "pie",
+    "os-families": ["linux"]
   }
 }

@@ -327,6 +327,7 @@ pub fn opaque_finish_server_login(
 #[php_module]
 pub fn get_module(module: ModuleBuilder) -> ModuleBuilder {
     module
+        .name("opaque_auth")
         .function(wrap_function!(opaque_create_setup))
         .function(wrap_function!(opaque_get_public_key))
         .function(wrap_function!(opaque_start_client_registration))

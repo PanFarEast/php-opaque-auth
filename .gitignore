@@ -5,3 +5,16 @@
 *.dll
 /.phpunit.cache/
 node_modules/
+/pie/autom4te.cache/
+/pie/build/
+/pie/include/
+/pie/modules/
+/pie/Makefile*
+/pie/config.h*
+/pie/config.log
+/pie/config.nice
+/pie/config.status
+/pie/configure
+/pie/configure.ac
+/pie/libtool
+/pie/run-tests.php

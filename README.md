@@ -10,7 +10,52 @@ The extension exposes protocol operations only. PHP application code owns identi
 
 The default target is the same Ristretto255 suite used by `@serenity-kit/opaque`. `@serenity-kit/opaque-p256` requires a distinct P-256 ciphersuite and is not implemented by the initial Ristretto-only build.
 
-## Build
+## Install from a local checkout
+
+The extension can be built and installed with [PIE](https://github.com/php/pie). The test environment pins PIE 1.5.5 and Composer 2.11.1. It requires Rust 1.88+, Cargo, Clang and libclang, PHP 8.3–8.5 development headers and matching `phpize`/`php-config`, plus make, autoconf, libtool, a C compiler, and Git/unzip. The installation CI targets NTS PHP on Linux. ZTS verification is tracked separately; it is not disabled in PIE metadata. Windows and macOS installation are not supported by this Linux-only packaging.
+
+| Component | Name |
+| --- | --- |
+| Native PIE package | `engshun/ext-opaque-auth` |
+| Composer facade package | `engshun/opaque-auth` |
+| PHP module / installed file | `opaque_auth` / `opaque_auth.so` |
+| Cargo build artifact | `libext_opaque_auth.so` |
+
+From the extension checkout, add it as a local PIE repository and install it for the PHP ABI you intend to use:
+
+```sh
+pie repository:add path /absolute/path/to/ext-opaque-auth \
+  --with-php-config=/path/to/php-config
+pie install 'engshun/ext-opaque-auth:*@dev' \
+  --with-php-config=/path/to/php-config \
+  --with-phpize-path=/path/to/phpize
+php --ri opaque_auth
+```
+
+The `php --ri` check should show the `opaque_auth` module. Use the `php` binary corresponding to the supplied PHP development tools. If a prerequisite is missing or the ABI does not match, resolve that environment issue before retrying; this workflow does not provide a manual-build fallback.
+
+PIE installs the native package `engshun/ext-opaque-auth`, not a PHP autoloader. The separate library package `engshun/opaque-auth` loads `Opaque\Client` and `Opaque\Server` and requires the installed `ext-opaque_auth` module. In your application, add the facade directory as a Composer path repository:
+
+```json
+{
+  "repositories": [
+    { "type": "path", "url": "/absolute/path/to/ext-opaque-auth/php" }
+  ]
+}
+```
+
+```sh
+composer require 'engshun/opaque-auth:*@dev'
+```
+
+Then load `vendor/autoload.php` in your application. Run Composer with the same PHP runtime used by your application so it can check the native extension requirement. Alternatively, explicitly include `php/Opaque.php` from the checkout. After installation, the extension must be enabled for the PHP runtime that runs the application. To remove the native extension with PIE:
+
+```sh
+pie uninstall engshun/ext-opaque-auth \
+  --with-php-config=/path/to/php-config
+```
+
+## Build from source
 
 Requirements: Rust 1.88+ (needed by the PHP 8.5-capable `ext-php-rs` dependency), PHP development headers for the target ABI, and the system dependencies required by `ext-php-rs` (including Clang).
 
@@ -18,7 +63,7 @@ Requirements: Rust 1.88+ (needed by the PHP 8.5-capable `ext-php-rs` dependency)
 cargo build --release
 ```
 
-The produced shared library is `target/release/libext_opaque_auth.so` on Linux. Load it with PHP's `extension=` directive. The registered extension module is `ext-opaque-auth`. The `Opaque\Client` and `Opaque\Server` static methods accept associative arrays with Serenity Kit's field names and return associative arrays.
+The Cargo build artifact is `target/release/libext_opaque_auth.so` on Linux. For manual loading, use PHP's `extension=` directive with the built library; the registered module name is `opaque_auth`. The `Opaque\Client` and `Opaque\Server` static methods accept associative arrays with Serenity Kit's field names and return associative arrays.
 
 Load the PHP facade before calling these methods (or use its Composer classmap autoloader):
 
@@ -97,7 +142,7 @@ cargo test
 cargo clippy --all-targets -- -D warnings
 ```
 
-The complete checks include PHP flows, malformed-input failures, and JavaScript interoperability:
+The complete checks include PHP flows, malformed-input failures, JavaScript interoperability, and local PIE install/remove/reinstall with missing-prerequisite checks. Installation checks modify the disposable container's extension directory and INI files; they refuse to run without its explicit test-container marker.
 
 ```sh
 docker build --build-arg PHP_VERSION=8.3 -t opaque-check -f tests/Dockerfile .

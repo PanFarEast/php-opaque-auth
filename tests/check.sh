@@ -1,6 +1,8 @@
 #!/bin/sh
 set -eu
 
+composer validate --strict --no-check-publish
+composer validate --working-dir=php --strict --no-check-publish
 cargo fmt --check
 cargo test --locked
 cargo clippy --locked --all-targets -- -D warnings
@@ -14,3 +16,5 @@ done
 
 npm ci --prefix tests/interop --ignore-scripts --no-audit --no-fund
 npm test --prefix tests/interop
+
+sh tests/pie/check.sh

@@ -7,7 +7,7 @@ function check(bool $condition, string $message): void {
     if (!$condition) { throw new RuntimeException($message); }
 }
 
-check(extension_loaded('ext-opaque-auth'), 'renamed extension module is registered');
+check(extension_loaded('opaque_auth'), 'PIE-compatible extension module is registered');
 
 $setup = Opaque\Server::createSetup();
 check(is_string($setup) && $setup !== '', 'server setup is returned');
