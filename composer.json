@@ -1,0 +1,13 @@
+{
+  "name": "engshun/php-opaque",
+  "description": "PHP facade for the native OPAQUE extension",
+  "type": "library",
+  "license": ["MIT", "Apache-2.0"],
+  "require": {
+    "php": ">=8.3",
+    "ext-ext-opaque-ke": "*"
+  },
+  "autoload": {
+    "classmap": ["php/"]
+  }
+}

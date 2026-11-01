@@ -1,0 +1,11 @@
+{
+  "name": "php-opaque-interop-tests",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test"
+  },
+  "devDependencies": {
+    "@serenity-kit/opaque": "1.1.0"
+  }
+}

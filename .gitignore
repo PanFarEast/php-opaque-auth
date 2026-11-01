@@ -4,3 +4,4 @@
 *.dylib
 *.dll
 /.phpunit.cache/
+node_modules/
