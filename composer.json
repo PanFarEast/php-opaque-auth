@@ -1,11 +1,11 @@
 {
-  "name": "engshun/php-opaque",
+  "name": "engshun/ext-opaque-auth",
   "description": "PHP facade for the native OPAQUE extension",
   "type": "library",
   "license": ["MIT", "Apache-2.0"],
   "require": {
     "php": ">=8.3",
-    "ext-ext-opaque-ke": "*"
+    "ext-ext-opaque-auth": "*"
   },
   "autoload": {
     "classmap": ["php/"]

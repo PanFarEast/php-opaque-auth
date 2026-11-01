@@ -1,4 +1,4 @@
-# ext-opaque-ke
+# ext-opaque-auth
 
 Native PHP OPAQUE protocol extension built on [`opaque-ke`](https://crates.io/crates/opaque-ke) and [`ext-php-rs`](https://ext-php.rs/), targeting PHP 8.3–8.5.
 
@@ -18,12 +18,12 @@ Requirements: Rust 1.88+ (needed by the PHP 8.5-capable `ext-php-rs` dependency)
 cargo build --release
 ```
 
-The produced shared library is `target/release/libext_opaque_ke.so` on Linux. Load it with PHP's `extension=` directive. The `Opaque\Client` and `Opaque\Server` static methods accept associative arrays with Serenity Kit's field names and return associative arrays.
+The produced shared library is `target/release/libext_opaque_auth.so` on Linux. Load it with PHP's `extension=` directive. The registered extension module is `ext-opaque-auth`. The `Opaque\Client` and `Opaque\Server` static methods accept associative arrays with Serenity Kit's field names and return associative arrays.
 
 Load the PHP facade before calling these methods (or use its Composer classmap autoloader):
 
 ```php
-require_once '/path/to/php-opaque/php/Opaque.php';
+require_once '/path/to/ext-opaque-auth/php/Opaque.php';
 ```
 
 ## PHP API
