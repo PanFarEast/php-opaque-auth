@@ -1,0 +1,6 @@
+/target/
+/vendor/
+*.so
+*.dylib
+*.dll
+/.phpunit.cache/

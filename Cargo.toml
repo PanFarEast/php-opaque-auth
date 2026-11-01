@@ -1,0 +1,28 @@
+[package]
+name = "ext-opaque-ke"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85"
+license = "MIT OR Apache-2.0"
+description = "PHP extension for OPAQUE password-authenticated key exchange"
+
+[lib]
+crate-type = ["cdylib"]
+
+[features]
+default = ["ristretto"]
+ristretto = []
+
+[dependencies]
+base64 = "0.22"
+ext-php-rs = "0.13"
+opaque-ke = { version = "=4.0.1", features = ["std", "argon2"] }
+rand = "0.8"
+sha2 = "0.10"
+argon2 = "0.5"
+generic-array = "=0.14.7"
+
+[profile.release]
+strip = "debuginfo"
+lto = true
+codegen-units = 1
